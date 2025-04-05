@@ -1,4 +1,5 @@
 import java.lang.ArrayIndexOutOfBoundsException
+import scala.annotation.tailrec
 
 sealed trait List[+A]
 case object Nil extends List[Nothing]
@@ -39,11 +40,11 @@ object List {
 		}
 	}
 
-	def sum2(ns: List[Int]) = {
+	def sum_2(ns: List[Int]) = {
 		foldRight(ns, 0)((x, y) => x + y)
 	}
 	
-	def product2(ns: List[Double]) = {
+	def product_2(ns: List[Double]) = {
 		foldRight(ns, 1.0)(_ * _)
 	}
 
@@ -74,10 +75,10 @@ object List {
 		}
 		loop(l, n)
 	}
-	def drop2[A](l: List[A], n: Int): List[A] = {
+	def drop_2[A](l: List[A], n: Int): List[A] = {
 		n match {
 			case x: Int if (x <= 0) => l
-			case _ => drop2(tail(l), n - 1)
+			case _ => drop_2(tail(l), n - 1)
 		}
 	}
 
@@ -100,7 +101,7 @@ object List {
 		}
 		inner(l, List())
 	}
-	def init2[A](l: List[A]): List[A] = {
+	def init_2[A](l: List[A]): List[A] = {
 		l match {
 			case Nil => throw new ArrayIndexOutOfBoundsException
 			case Cons(_, Nil) => Nil
@@ -110,10 +111,69 @@ object List {
 
 	// Exercise 3.9
 	def length[A](as: List[A]): Int = {
-		foldRight(as, Nil)()
+		foldRight(as, 0)((_, x) => x + 1)
 	}
 
+	// Exercise 3.10
+	@annotation.tailrec
+	def foldLeft[A, B](l: List[A], z: B)(f: (B, A) => B): B = {
+		l match {
+			case Nil => z
+			case Cons(h, t) => foldLeft(t, f(z, h))(f)
+		}
+	}
+
+	// Exercise 3.11
+	def sum3(l: List[Int]): Int = {
+		foldLeft(l, 0)(_ + _)
+	}
+	def product3(l: List[Double]): Double = {
+		foldLeft(l, 1.0)(_ * _)
+	}
+	def length_2[A](l: List[A]): Int = {
+		foldLeft(l, 0)((z, _) => z + 1)
+	}
+
+	// Exercise 3.12
+	def reverse[A](l: List[A]): List[A] = {
+		foldLeft(l, Nil: List[A])((t, h) => Cons(h, t))
+	}
+
+	// Exercise 3.13
+	def foldLeftViaRight[A, B](l: List[A], z: B)(f: (B, A) => B): B = {
+		foldRight(l, (b: B) => b)((a, g) => b => g(f(b, a)))(z)
+	}
+	def foldRightViaLeft[A, B](l: List[A], z: B)(f: (A, B) => B): B = {
+		foldLeft(reverse(l), z)((t, h) => f(h, t))
+	}
+
+	// Exercise 3.14
+	def append_2[A](a1: List[A], a2: List[A]): List[A] = {
+		foldRight(a1, a2)(Cons(_, _))
+	}
+
+	// Exercise 3.15
+	def flatten[A](ll: List[List[A]]): List[A] = {
+		foldLeft(ll, Nil)(append_2)
+	}
+
+	// Exercise 3.16
+	def increment(l: List[Int], n: Int): List[Int] = {
+		foldLeft(l, Nil)((t, h) => Cons(h + n, t))
+	}
+
+	// Exercise 3.17
+	def doubleToString(l: List[Double]): List[String] = {
+		foldLeft(l, Nil)((t, h) => Cons(h.toString(), t))
+	}
+
+	// Exercise 3.18
+	def map[A, B](l: List[A])(f: A => B): List[B] = {
+		foldLeft(l, Nil)((t, h) => Cons(f(h), t))
+	}
+
+
 	def main(args: Array[String]): Unit = {
-		println(foldRight(List(1, 2, 3), Nil)(Cons(_, _)))
+		println(map(List(1, 2, 3, 4))((a: Int) => a.toString: String))
 	}
 }
