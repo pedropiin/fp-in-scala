@@ -23,7 +23,7 @@ object List {
 
 	def apply[A](as: A*): List[A] = {
 		if (as.isEmpty) Nil
-		else Cons(as.head, apply(as.tail: _*))
+		else Cons(as.head, apply(as.tail*))
 	}
 
 	def append[A](a1: List[A], a2: List[A]): List[A] = {
@@ -169,11 +169,105 @@ object List {
 
 	// Exercise 3.18
 	def map[A, B](l: List[A])(f: A => B): List[B] = {
-		foldLeft(l, Nil)((t, h) => Cons(f(h), t))
+		foldRightViaLeft(l, Nil)((h, t) => Cons(f(h), t))
+	}
+	def map_2[A, B](l: List[A])(f: A => B): List[B] = {
+		val buf = new collection.mutable.ListBuffer[B]
+		def go(l: List[A]): Unit = {
+			l match {
+				case Nil => ()
+				case Cons(h, t) => buf += f(h); go(t)
+			}
+		}
+		go(l)
+		List(buf.toList*)
 	}
 
+	// Exercise 3.19
+	def filter[A](l: List[A])(f: A => Boolean): List[A] = {
+		foldRightViaLeft(l, Nil)((h, t) => if (f(h)) Cons(h, t) else t)
+	}
+
+	// Exercise 3.20
+	def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] = {
+		flatten(foldRightViaLeft(l, Nil)((h, t) => Cons(f(h), t)))
+	}
+
+	// Exercise 3.21
+	def filter_2[A](l: List[A])(f: A => Boolean): List[A] = {
+		flatMap(l)(x => if (f(x)) List(x) else Nil)
+	}
+
+	// Exercise 3.22
+	def zipSum(l1: List[Int], l2: List[Int]): List[Int] = {
+		if (l1 == Nil || l2 == Nil) throw new IllegalArgumentException
+		else if (length_2(l1) != length_2(l2)) throw new IllegalArgumentException
+		@annotation.tailrec
+		def go(l1: List[Int], l2: List[Int], res: List[Int]): List[Int] = {
+			l1 match {
+				case Nil => append(res, Nil)
+				case Cons(h1, _) =>
+					l2 match {
+						case Cons(h2, _) => go(tail(l1), tail(l2), append(res, List(h1 + h2)))
+					}
+			}
+		}
+		go(l1, l2, List())
+	}
+	def addPairwise(l1: List[Int], l2: List[Int]): List[Int] = {
+		(l1, l2) match {
+			case (Nil, _) => Nil
+			case (_, Nil) => Nil
+			case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, addPairwise(t1, t2))
+		}
+	}
+
+	// Exercise 3.23
+	def zipWith[A](l1: List[A], l2: List[A])(f: (A, A) => A): List[A] = {
+		(l1, l2) match {
+			case (Nil, _) => Nil
+			case (_, Nil) => Nil
+			case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2)(f))
+		}
+	}
+
+	// Exercise 3.24
+	def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = {
+		@annotation.tailrec
+		def countEquals(sup: List[A], sub: List[A], count: Int): Int = {
+			(sup, sub) match {
+				case (Nil, sub) => if (sub == Nil) count else -1
+				case (_, Nil) => count
+				case (Cons(h1, t1), Cons(h2, t2)) => if (h1 == h2) (countEquals(t1, t2, count + 1)) else -1
+			}
+		}
+		var ans: Int = -2			// local mutability
+		def go(sup: List[A]): Unit = {
+			sup match {
+				case Nil => ()
+				case Cons(_, t) => ans = ans.max(countEquals(sup, sub, 0)); go(t)
+			}
+		}
+		go(sup)
+		if (ans == -1) false else true
+	}
+	def hasSubsequence_2[A](sup: List[A], sub: List[A]): Boolean = {
+		@annotation.tailrec
+		def startsWith[A](l: List[A], prefix: List[A]): Boolean = {
+			(l, prefix) match {
+				case (_, Nil) => true
+				case (Cons(h, t), Cons(h2, t2)) if h == h2 => startsWith(t, t2)
+				case _ => false
+			}
+		}
+		sup match {
+			case Nil => sub == Nil
+			case _ if startsWith(sup, sub) => true
+			case Cons(_, t) => hasSubsequence_2(t, sub)
+		}
+	}
 
 	def main(args: Array[String]): Unit = {
-		println(map(List(1, 2, 3, 4))((a: Int) => a.toString: String))
+		println(hasSubsequence(List(1, 2, 3, 4, 5), List()))
 	}
 }
