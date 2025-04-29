@@ -34,13 +34,16 @@ object Tree {
   }
 
   // Exercise 3.28
-  def map[A, B](tree: Tree[A])(f: A => B): List[B] = {
-    
+  def map[A, B](tree: Tree[A])(f: A => B): Tree[B] = {
+    tree match {
+      case Leaf(v) => Leaf(f(v))
+      case Branch(left, right) => Branch(map(left)(f), map(right)(f))
+    }
   }
 
   def main(args: Array[String]): Unit = {
     val simpleTree: Tree[Int] = Branch(Branch(Leaf(4), Leaf(2)), Leaf(3))
     val complexTree: Tree[Int] = Branch(Leaf(5), Branch(Branch(Leaf(7), Branch(Leaf(5), Leaf(11))), Leaf(-2)))
-    println(depth(complexTree))
+    println(map(simpleTree)((x: Int) => x.toDouble))
   }
 }
